@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subsea Relic — Graybox Core Mechanics Prototype</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Main Game Viewport -->
+    <main class="viewport-container">
+      <header class="hud-bar">
+        <div class="hud-group">
+          <span class="badge badge-graybox">GRAYBOX PROTOTYPE v0.1</span>
+          <h1 class="game-title">SUBSEA RELIC</h1>
+        </div>
+
+        <div class="hud-stats">
+          <div class="stat-item">
+            <span class="stat-label">HP / LIVES</span>
+            <span id="hud-hp" class="stat-value hp-val">♥♥♥</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">OXYGEN (O₂)</span>
+            <div class="oxygen-bar-outer">
+              <div id="hud-oxygen-fill" class="oxygen-bar-fill"></div>
+            </div>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">RELIC SHARDS</span>
+            <span id="hud-relics" class="stat-value relic-val">0 / 3</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">TREASURE</span>
+            <span id="hud-score" class="stat-value score-val">$0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">EXIT SUB</span>
+            <span id="hud-exit-status" class="stat-value locked-val">LOCKED</span>
+          </div>
+        </div>
+
+        <div class="hud-actions">
+          <select id="level-select" title="Chọn màn test">
+            <option value="0">Map 1: Traversal & Bubbles (Cơ bản)</option>
+            <option value="1">Map 2: Hazards, Clams & Turtles</option>
+            <option value="2">Map 3: Deep Trench (Full Mechanics)</option>
+          </select>
+          <button id="btn-reset" class="btn">Reset Map (R)</button>
+        </div>
+      </header>
+
+      <div class="canvas-wrapper">
+        <canvas id="game-canvas" width="960" height="600"></canvas>
+      </div>
+
+      <footer class="controls-bar">
+        <span><strong>Di chuyển:</strong> A / D hoặc ◀ / ▶</span>
+        <span><strong>Nhảy / Tách khỏi Bong bóng:</strong> W / Space / ▲</span>
+        <span><strong>Đi xuống xuyên sàn mỏng / Bong bóng:</strong> S / ▼</span>
+        <span><strong>Bơi vẫy nhẹ (Swim Boost khi đang rơi):</strong> Giữ Space</span>
+        <span><strong>Reset nhanh:</strong> R</span>
+      </footer>
+    </main>
+
+    <!-- Graybox Inspector & Live Physics Tuner -->
+    <aside class="inspector-panel">
+      <div class="panel-section">
+        <h2>🛠️ Graybox Debug & View</h2>
+        <label class="checkbox-row">
+          <input type="checkbox" id="chk-grid" checked />
+          <span>Hiện lưới tọa độ (World Grid)</span>
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="chk-labels" checked />
+          <span>Hiện nhãn Entity & State</span>
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="chk-vectors" checked />
+          <span>Hiện Vector vận tốc (Velocity)</span>
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="chk-sensors" checked />
+          <span>Hiện vùng cảm biến / Hitbox</span>
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="chk-godmode" />
+          <span>God Mode (Bất tử & Vô hạn O₂)</span>
+        </label>
+      </div>
+
+      <div class="panel-section">
+        <h2>⚙️ Tinh chỉnh Vật lý Dưới nước</h2>
+        <div class="slider-group">
+          <div class="slider-header">
+            <label for="inp-gravity">Trọng lực nước (Gravity)</label>
+            <span id="val-gravity">0.22</span>
+          </div>
+          <input type="range" id="inp-gravity" min="0.08" max="0.50" step="0.01" value="0.22" />
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-header">
+            <label for="inp-jump">Lực nhảy (Jump Force)</label>
+            <span id="val-jump">7.6</span>
+          </div>
+          <input type="range" id="inp-jump" min="4.5" max="12.0" step="0.2" value="7.6" />
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-header">
+            <label for="inp-speed">Tốc độ đi bộ / bơi ngang</label>
+            <span id="val-speed">3.8</span>
+          </div>
+          <input type="range" id="inp-speed" min="2.0" max="7.0" step="0.2" value="3.8" />
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-header">
+            <label for="inp-bubble">Tốc độ Bong bóng nổi</label>
+            <span id="val-bubble">2.2</span>
+          </div>
+          <input type="range" id="inp-bubble" min="1.0" max="5.0" step="0.2" value="2.2" />
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-header">
+            <label for="inp-bounce">Độ nảy Hải quỳ (Spring)</label>
+            <span id="val-bounce">11.2</span>
+          </div>
+          <input type="range" id="inp-bounce" min="7.0" max="16.0" step="0.2" value="11.2" />
+        </div>
+
+        <button id="btn-default-physics" class="btn btn-secondary btn-full">Khôi phục thông số chuẩn</button>
+      </div>
+
+      <div class="panel-section legend-section">
+        <h2>📋 Chú giải Graybox Entities</h2>
+        <ul class="legend-list">
+          <li><span class="swatch swatch-player"></span> <strong>PLAYER (Diver):</strong> Đi bộ đáy biển, nhảy chậm trong nước, cưỡi bong bóng.</li>
+          <li><span class="swatch swatch-bubble"></span> <strong>BIG BUBBLE:</strong> Bong bóng khí lớn từ mạch nước. Nhảy vào để cưỡi lên cao + hồi O₂.</li>
+          <li><span class="swatch swatch-bounce"></span> <strong>ANEMONE (Spring):</strong> Đệm hải quỳ đàn hồi đẩy nhân vật vọt lên.</li>
+          <li><span class="swatch swatch-turtle"></span> <strong>TURTLE (Moving):</strong> Rùa biển di chuyển theo quỹ đạo, chở người chơi.</li>
+          <li><span class="swatch swatch-clam"></span> <strong>CLAM (Vỏ sò):</strong> Đóng/Mở theo nhịp. Lấy Ngọc trai khi mở, kẹp mất máu khi đóng.</li>
+          <li><span class="swatch swatch-relic"></span> <strong>RELIC SHARD:</strong> Mảnh cổ vật bắt buộc thu thập đủ để mở Tàu Ngầm.</li>
+          <li><span class="swatch swatch-hazard"></span> <strong>CRAB / JELLY / URCHIN:</strong> Quái tuần tra & gai nhím biển.</li>
+          <li><span class="swatch swatch-sub"></span> <strong>SUBMARINE (Exit):</strong> Điểm qua màn sau khi gom đủ Relic.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <script src="src/config.js"></script>
+  <script src="src/input.js"></script>
+  <script src="src/entities.js"></script>
+  <script src="src/levels.js"></script>
+  <script src="src/game.js"></script>
+</body>
+</html>
